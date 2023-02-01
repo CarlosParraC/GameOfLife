@@ -3,39 +3,43 @@ import pygame
 import numpy as np
 
 color_background = (0,0,0)
-color_grid = (40,40,40)
-color_die_next = (170, 170, 170)
+color_grid = (10,10,10)
+color_dying = (170, 170, 170)
 color_alive = (255,255,255)
 
-def update(screen, cells, size, progress=False):
-    board = np.zeros((cells.shape[0], cells.shape[1]))
+def game_logic(board, posX, posY, neighboursAlive):
+    if (board[posX, posY] == 1 ):
+        if (neighboursAlive < 2 or neighboursAlive > 3):
+            return [0, color_dying]
+        else:
+            return [1, color_alive]
+    else:
+        if (neighboursAlive == 3):
+            return [1, color_alive]
+                    
 
-    for ( row, col) in np.ndindex(cells.shape):
-        neighboursAlive = np.sum(cells[row-1:row+2, col-1:col+2]) - cells[row, col]
-        color = color_background if cells[row,col] == 0 else color_alive
+def update(screen, board, size, progress=False):
+    board_new = np.zeros((board.shape[0], board.shape[1]))
+
+    for (row, col) in np.ndindex(board.shape):
+        neighboursAlive = np.sum(board[row-1:row+2, col-1:col+2]) - board[row, col]
+        color = color_background if board[row,col] == 0 else color_alive
 
         if (progress):
-            if (cells[row, col] == 1 ):
-                if (neighboursAlive < 2 or neighboursAlive > 3):
-                    color = color_die_next
-                else:
-                    board[row, col] = 1
-                    color= color_alive
-            else:
-                if (neighboursAlive == 3):
-                    board[row, col] = 1
-                    color = color_alive
+            result = game_logic(board, row, col, neighboursAlive)
+            if (result):
+                board_new[row, col], color = result
 
-        pygame.draw.rect(screen, color, (col* size, row * size, size - 1, size - 1))
+        pygame.draw.rect(screen, color, (col*size, row*size, size-1, size-1))
     
-    return board
+    return board_new
 
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((800, 600))
+    screen = pygame.display.set_mode((800, 800))
 
-    cells = np.zeros((60, 80))
+    cells = np.zeros((80, 80))
     screen.fill(color_grid)
     update(screen, cells, 10)
 
@@ -54,7 +58,7 @@ def main():
                     update(screen, cells, 10)
                     pygame.display.update()
                 if(event.key == pygame.K_BACKSPACE):
-                    cells = np.zeros((60, 80))
+                    cells = np.zeros((80, 80))
                     update(screen, cells, 10)
                     pygame.display.update()
             
